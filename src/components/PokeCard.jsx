@@ -1,12 +1,15 @@
 import { useEffect, useState } from "react"
 import { getFullPokedexNumber, getPokedexNumber } from "../utils/";
 import TypeCard from "./TypeCard";
+import Modal from "./Modal";
 
 export default function PokeCard(props) {
 
   const { selectedPokemon } = props
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(false)
+  const [skill, setSkill] = useState(null)
+  const [loadingSkill, setLoadingSkill] = useState(false)
 
   const { name, height, abilities, stats, types, moves, sprites } = data || {}
 
@@ -15,6 +18,47 @@ export default function PokeCard(props) {
     if (['versions', 'other'].includes(val)) { return false }
     return true
   })
+
+  async function fetchMoveData(move, moveUrl) {
+    if (loadingSkill || !localStorage || !moveUrl) { return }
+
+    let moveCache = {}
+    if (localStorage.getItem('pokemon-moves')) {
+      moveCache = JSON.parse(localStorage.getItem('pokemon-moves'))
+    }
+    if (move in moveCache) {
+      setSkill(moveCache[move])
+      console.log('Found move in cache')
+      return
+    }
+
+    try {
+      setLoadingSkill(true)
+      const res = await fetch(moveUrl)
+      const moveData = await res.json()
+      console.log('Fetched move from API', moveData)
+
+      const description = moveData?.flavor_text_entries.filter
+        (val => {
+          return val.version_group.name == 'firered-leafgreen'
+        })[0]?.flavor_text
+
+      const skillData = {
+        name: move,
+        description
+      }
+
+      setSkill(skillData)
+      moveCache[move] = skillData
+      localStorage.setItem('pokemon-moves', JSON.stringify(moveCache))
+    }
+    catch (error) {
+      console.log(error)
+    }
+    finally {
+      setLoadingSkill(false)
+    }
+  }
 
   useEffect(() => {
     if (loading || !localStorage) { return }
@@ -26,6 +70,7 @@ export default function PokeCard(props) {
 
     if (selectedPokemon in cache) {
       setData(cache[selectedPokemon])
+      console.log('Found pokemon in cache')
       return
     }
 
@@ -61,8 +106,20 @@ export default function PokeCard(props) {
   }
 
   return (
-    <div>
-      <div className="poke-card">
+    <div className="poke-card">
+      {skill && (
+        <Modal handleCloseModal={() => { setSkill(null) }}>
+          <div>
+            <h6>Name</h6>
+            <h2 className="skill-name">{skill.name.replaceAll('-', ' ')}</h2>
+          </div>
+          <div>
+            <h6>Description</h6>
+            <p>{skill.description || 'No Description provided'}</p>
+          </div>
+        </Modal>
+      )}
+      <div>
         <h4>#{getFullPokedexNumber(selectedPokemon)}</h4>
         <h4>{name}</h4>
       </div>
@@ -87,6 +144,33 @@ export default function PokeCard(props) {
         })
 
         }
+      </div>
+      <h3>Stats</h3>
+      <div className="stats-card">
+        {
+          stats.map((statObject, statIndex) => {
+            const { stat, base_stat } = statObject
+            return (
+              <div key={statIndex} className="stat-item">
+                <p>{stat?.name.replaceAll('-', ' ')}</p>
+                <h4>{base_stat}</h4>
+              </div>
+            )
+          })
+        }
+      </div>
+      <h3>Moves</h3>
+      <div className="pokemon-move-grid">
+        {moves.map((moveObject, moveIndex) => {
+          return (
+            <button className="pokemon-move"
+              key={moveIndex} onClick={() => {
+                fetchMoveData(moveObject?.move?.name, moveObject?.move.url)
+              }}>
+              <p>{moveObject?.move?.name.replaceAll('-', ' ')}</p>
+            </button>
+          )
+        })}
       </div>
     </div>
   )
