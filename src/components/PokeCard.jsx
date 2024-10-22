@@ -28,7 +28,7 @@ export default function PokeCard(props) {
     }
     if (move in moveCache) {
       setSkill(moveCache[move])
-      console.log('Found move in cache')
+      // console.log('Found move in cache')
       return
     }
 
@@ -36,7 +36,7 @@ export default function PokeCard(props) {
       setLoadingSkill(true)
       const res = await fetch(moveUrl)
       const moveData = await res.json()
-      console.log('Fetched move from API', moveData)
+      // console.log('Fetched move from API', moveData)
 
       const description = moveData?.flavor_text_entries.filter
         (val => {
@@ -70,7 +70,7 @@ export default function PokeCard(props) {
 
     if (selectedPokemon in cache) {
       setData(cache[selectedPokemon])
-      console.log('Found pokemon in cache')
+      // console.log('Found pokemon in cache')
       return
     }
 
@@ -83,7 +83,7 @@ export default function PokeCard(props) {
         const res = await fetch(finalUrl)
         const pokemonData = await res.json()
         setData(pokemonData)
-        console.log(pokemonData)
+        // console.log(pokemonData)
 
         cache[selectedPokemon] = pokemonData
         localStorage.setItem('pokedex', JSON.stringify(cache))
