@@ -5,7 +5,7 @@ import { useState } from "react";
 
 function App() {
 
-  const [selectedPokemon, setSelectedPokemon] = useState(0)
+  const [selectedPokemon, setSelectedPokemon] = useState(24)
   const [showSideMenu, setShowSideMenu] = useState(false)
 
 
